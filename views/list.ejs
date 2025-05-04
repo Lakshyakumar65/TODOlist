@@ -4,31 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Todo list</title>
-
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <div class="box">
+    <div class="box" id="heading">
         <h1>Todo list</h1>
     </div>
     <div class="box">
-      <!-- for(var i =0 ;i < ejes.length ; i++){
-        <p><%= ejes[i] %></p> -->
-      
-        <% ejes.forEach(function(items){%>
-           <form action="/delete" method="post">
+        <% ejes.forEach(function(items){ %>
             <div class="item">
-                <input type="checkbox" name="checkbox1" value="<%= items._id %>"  onchange="this.form.submit()">
-                <p><%= items.name%></p>
+                <form action="/delete" method="post" style="margin: 0;">
+                    <input type="checkbox" name="checkbox1" value="<%= items._id %>" onchange="this.form.submit()">
+                </form>
+                <p><%= items.name %></p>
             </div>
-        </form>
-       <% }) %>
+        <% }) %>
         
-        
-            
-       
-        <form action="/" method="POST">
-            <input type="text" name="ele1" placeholder="Enter the task">
+        <form action="/" method="POST" class="item">
+            <input type="text" name="ele1" placeholder="Enter the task" required>
             <button type="submit">+</button>
         </form>
     </div>

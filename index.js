@@ -2,75 +2,93 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const { default: mongoose } = require("mongoose");
 
-
 var app = express();
 
-app.set("view engine","ejs");
+app.set("view engine", "ejs");
 
-
-
-app.use(express.urlencoded({extended:true}));
+app.use(express.urlencoded({extended: true}));
 app.use(express.static('public'));
-// var items = [];
-mongoose.connect("mongodb://localhost:27017/todo");
+
+// Connect to MongoDB with error handling
+mongoose.connect("mongodb://localhost:27017/todo")
+  .then(() => console.log("Connected to MongoDB"))
+  .catch(err => console.error("MongoDB connection error:", err));
+
 const trySchema = new mongoose.Schema({
-    name:String
-});
-const item = mongoose.model("task",trySchema);
-const todo = new item({
-    name:"Learn DSA "
-});
-const todo2 = new item({
-    name:"Learn MERN  "
-});
-const todo3 = new item({
-    name:"Leran UI/UX"
-});
-const todo4 = new item({
-    name:"Learn Hacking  "
-});
-const todo5 = new item({
-    name:"Learn App Dev "
-});
-todo.save();
-// todo1.save();
-// todo2.save();
-// todo3.save();
-// todo4.save();
-// todo5.save();
-
-// var example ="Working";
-app.get("/", function(req,res){
-   item.find({},function(err,foundItems){
-    if(err){
-        console.log(err);
-    }
-    else{
-        res.render("list",{ejes : foundItems});
-    }
-});
+    name: String
 });
 
+const item = mongoose.model("task", trySchema);
 
-app.post("/",function(req,res){
-    const itemName = req.body.ele1;
-    const todo4 = new item({
-       name:itemName
-    });
-    todo4.save();
-    res.redirect("/");
-});
-
-app.post("/delete",function(req,res){
-    const checked = req.body.checkbox1;
-    item.findByIdAndRemove(checked,function(err){
-        if(!err){
-           console.log("deleted");
-           res.redirect("/");
+// Initialize database only once if empty
+app.get("/setup", async function(req, res) {
+    try {
+        const count = await item.countDocuments();
+        if (count === 0) {
+            const initialItems = [
+                { name: "Learn DSA" },
+                { name: "Learn MERN" },
+                { name: "Learn UI/UX" },
+                { name: "Learn Hacking" },
+                { name: "Learn App Dev" }
+            ];
+            
+            await item.insertMany(initialItems);
+            console.log("Initial items added");
         }
-       });
+        res.redirect("/");
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error setting up database");
+    }
 });
-app.listen(8000,function(){
-    console.log("Server started");
+
+// Main route using async/await instead of callbacks
+app.get("/", async function(req, res) {
+    try {
+        const foundItems = await item.find({});
+        res.render("list", {ejes: foundItems});
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error fetching tasks");
+    }
+});
+
+// Add new task with validation
+app.post("/", async function(req, res) {
+    const itemName = req.body.ele1.trim();
     
+    if (!itemName) {
+        return res.redirect("/");
+    }
+    
+    try {
+        const newTask = new item({
+            name: itemName
+        });
+        
+        await newTask.save();
+        res.redirect("/");
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error adding task");
+    }
+});
+
+// Delete task with better error handling
+app.post("/delete", async function(req, res) {
+    const checked = req.body.checkbox1;
+    
+    try {
+        await item.findByIdAndRemove(checked);
+        console.log("Task deleted");
+        res.redirect("/");
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error deleting task");
+    }
+});
+
+app.listen(8000, function() {
+    console.log("Server started on port 8000");
 });
